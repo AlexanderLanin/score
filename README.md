@@ -27,3 +27,38 @@ If you need to update pip dependencies, after modifying the requirements file, r
 ```
 bazel run //docs:requirements.update
 ```
+
+To update all existing dependencies, run:
+```
+bazel run //docs:requirements.update -- --upgrade
+```
+
+
+### Alternative incremental build
+
+While the above command is the most straightforward and official way to build the documentation,
+it can be slow, especially if you have many minor changes to the documentation and want to see the
+result quickly.
+The generated output will be in the _build directory.
+
+```sh
+bazel run //docs:incremental
+```
+
+### IDE integration
+
+For your IDE to support you with documentation, you need to run the following command.
+
+After doing so and installing the recommended esbonio extension, you should have e.g. a preview
+available when you edit a `.rst` file (VS Code only). When doing this the first time, you may need
+to restart your IDE.
+
+For python to detect datatypes in documentation-related `.py` files, you may need to point your
+IDE to the generated virtual environment at `.venv_docs`.
+
+You need to re-run this command, when any dependencies
+including our own extensions (metamodel, warnings, ...) change.
+
+```sh
+bazel run //docs:ide_support
+```
