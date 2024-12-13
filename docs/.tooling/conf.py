@@ -17,7 +17,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # from process.process_model_configuration import *
-from _extensions import metamodel, layouts
+from .tooling.extensions import metamodel, layouts
 
 
 # -- Project information -----------------------------------------------------
@@ -34,7 +34,7 @@ extensions = [
     "sphinx_needs",
 ]
 
-templates_path = ["_templates"]
+templates_path = [".tooling/_templates"]
 
 suppress_warnings = ["config.cache"]
 
@@ -45,7 +45,7 @@ numfig = True
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "pydata_sphinx_theme"  #  "alabaster"
-html_static_path = ["_assets"]
+html_static_path = [".tooling/assets"]
 html_css_files = [
     "css/score.css",
     "css/score_needs.css",

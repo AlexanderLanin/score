@@ -27,7 +27,7 @@ sphinx_docs(
         "**/*.html",
         "**/*.css",
     ]),
-    config = ":conf.py",
+    config = ":.tooling/conf.py",
     extra_opts = [
         "-W",
         "--keep-going",
@@ -49,16 +49,16 @@ sphinx_build_binary(
 py_library(
     name = "extensions",
     srcs = [
-        "_extensions/layouts.py",
-        "_extensions/metamodel.py",
+        ".tooling/_extensions/layouts.py",
+        ".tooling/_extensions/metamodel.py",
     ],
     imports = ["."],
 )
 
 compile_pip_requirements(
     name = "requirements",
-    src = "requirements.txt",
-    requirements_txt = "requirements_lock.txt",
+    src = ".tooling/requirements.txt",
+    requirements_txt = ".tooling/requirements_lock.txt",
     tags = [
         "manual",
     ],
