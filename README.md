@@ -16,49 +16,60 @@ $ bazel run //:format.fix
 
 ## Documentation
 
-Use //docs:docs target to build the documentation.
-```
-$ bazel build //docs:docs
-```
+Score supports multiple methods for generating documentation, tailored to different workflows:
+1. **Bazel-based builds** for clean, sandboxed outputs.
+2. **Incremental builds** for quick iterations during development.
+3. **IDE integration** for live previews, live warnings and even faster iterations.
 
-The output directory can be found under ```bazel-bin/docs/docs/_build/html```.
+### Bazel-based Build
 
-If you need to update pip dependencies, after modifying the requirements file, regenerate the lock file:
+This method ensures clean and isolated documentation builds in a controlled Bazel environment.
+It is best suited for CI pipelines or production-ready outputs, although it takes longer compared to
+incremental builds.
+
+```sh
+bazel build //docs:docs
 ```
-bazel run //docs:requirements.update
-```
-
-To update all existing dependencies, run:
-```
-bazel run //docs:requirements.update -- --upgrade
-```
+The output will be located in bazel-bin/docs/docs/_build/html.
 
 
-### Alternative incremental build
+### Incremental build
 
-While the above command is the most straightforward and official way to build the documentation,
-it can be slow, especially if you have many minor changes to the documentation and want to see the
-result quickly.
-The generated output will be in the _build directory.
+For local changes and faster feedback, use the incremental build.
+This method generates the documentation directly in the _build directory.
 
 ```sh
 bazel run //docs:incremental
 ```
+Unlike IDE integration, which renders only the current file, this approach is ideal for quickly
+verifying edits across the entire documentation during development.
+
 
 ### IDE integration
 
-For your IDE to support you with documentation, you need to run the following command.
-
-After doing so and installing the recommended esbonio extension, you should have e.g. a preview
-available when you edit a `.rst` file (VS Code only). When doing this the first time, you may need
-to restart your IDE.
-
-For python to detect datatypes in documentation-related `.py` files, you may need to point your
-IDE to the generated virtual environment at `.venv_docs`.
-
-You need to re-run this command, when any dependencies
-including our own extensions (metamodel, warnings, ...) change.
+For live previews, warnings, and linting during development,
+integrate Esbonio with your IDE (e.g., VS Code):
 
 ```sh
 bazel run //docs:ide_support
 ```
+
+VS Code: Install the Esbonio extension in VS Code. After installation, restart your IDE.
+You should now have live preview available when you open a `.rst` file.
+Note: if the extension was already installed when you ran the `ide_support` command,
+you will need to restart your IDE.
+
+For features like type detection in conf.py or extensions,
+point your IDE to the .venv_docs virtual environment.
+
+Re-run //docs:ide_support if you update Sphinx extensions or other dependencies.
+
+### Notes
+#### Output Locations
+* Bazel builds output to bazel-bin/docs/docs/_build/html.
+* Incremental builds output to _build.
+
+##### Troubleshooting
+* Restart your IDE if live previews or warnings are not working after running ide_support.
+* Ensure your virtual environment is up-to-date by re-running //docs:ide_support when dependencies
+  change.
