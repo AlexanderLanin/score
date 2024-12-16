@@ -69,7 +69,7 @@ Re-run //docs:ide_support if you update Sphinx extensions or other dependencies.
 * Bazel builds output to bazel-bin/docs/docs/_build/html.
 * Incremental builds output to _build.
 
-##### Troubleshooting
+#### Troubleshooting
 * Restart your IDE if live previews or warnings are not working after running ide_support.
 * Ensure your virtual environment is up-to-date by re-running //docs:ide_support when dependencies
   change.
