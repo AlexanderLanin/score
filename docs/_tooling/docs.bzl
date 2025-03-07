@@ -93,6 +93,7 @@ def incremental(source_code_linker, source_dir = "docs", conf_dir = "docs", buil
             "SOURCE_DIRECTORY": source_dir,
             "CONF_DIRECTORY": conf_dir,
             "BUILD_DIRECTORY": build_dir,
+            "ACTION": "incremental", # TODO
             # "ASSETS_DIR": "docs_assets",
         },
     )
@@ -124,8 +125,9 @@ def plantuml_bzl():
 def live_preview():
     py_binary(
         name = "live_preview",
-        srcs = ["//docs:_tooling/live_preview.py"],
+        srcs = ["//docs:_tooling/incremental.py"],
         deps = sphinx_requirements,
+            "ACTION": "incremental", # TODO
     )
 
 def ide_support():

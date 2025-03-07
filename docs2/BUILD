@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
+# TODO: zwei abhängige loads! all_docs_targets geht nicht ohne den anderen!
 load("//docs:_tooling/docs.bzl", "all_docs_targets")
 load("//docs:_tooling/extensions/score_source_code_linker/collect_source_files.bzl", "parse_source_files_for_needs_links")
 
@@ -30,4 +31,5 @@ all_docs_targets(
     conf_dir = "docs2",
     source_code_linker = "//docs2:all_module_source_files",
     source_dir = "docs2",
+    source_files_for_needs_links = ...filegroup!# TODO
 )
