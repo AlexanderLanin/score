@@ -22,6 +22,7 @@ def parser():
     )
 
 CollectedFilesInfo = provider(
+    doc = "All collected source files via aspect.",
     fields = {
         "files": "depset of source files",
     },
