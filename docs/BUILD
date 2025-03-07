@@ -57,13 +57,23 @@ pkg_tar(
     srcs = [":html_files"],
 )
 
+# These are only exported because they're passed as files to the //docs.bzl
+# macros, and thus must be visible to other packages. They should only be
+# referenced by the //docs.bzl macros.
+exports_files(
+    glob(["_tooling/**/*.py"]) + ["_tooling/requirements_lock.txt"],
+    visibility = ["//visibility:public"],
+)
+
+
+
 # Creates all documentation targets:
 # - `docs:incremental` for building docs incrementally at runtime
 # - `docs:live_preview` for live preview in the browser without an IDE
 # - `docs:ide_support` for creating python virtualenv for IDE support
 # - `docs:docs` for building documentation at build-time
 # - `docs:plantuml` and `:plantuml_for_python` targets, to be used as dependencies for plantuml generation
-all_docs_targets()
+all_docs_targets(source_code_linker = "//docs:score_source_code_parser")
 
 filegroup(
     name = "score_metamodel_sources",
@@ -104,6 +114,7 @@ score_py_pytest(
 
 # Trigger source code linker on these files.
 parse_source_files_for_needs_links(
+    name = "score_source_code_parser",
     srcs = [
         ":score_metamodel_sources",
     ],

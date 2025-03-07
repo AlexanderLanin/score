@@ -11,13 +11,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
+import argparse
 import os
 import subprocess
-import argparse
+
 import debugpy
-
 from sphinx.cmd.build import main as sphinx_main
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -36,47 +35,60 @@ if args.debug:
 workspace = os.getenv("BUILD_WORKSPACE_DIRECTORY")
 
 # Initialize with a default value
-output_files = ""
+source_code_linker_file = ""
+
+
+def get_env(name):
+    val = os.environ.get(name, None)
+    print(f"Env: {name} = {val}")
+    if val is None:
+        raise ValueError(f"Environment variable {name} is not set")
+    return val
+
 
 if workspace:
     # This will gives us all 'output files' and their location that are required
     #  by the 'source_link' extensions
+    # Build and run SOURCE_CODE_LINKER (it's run at build time)
     subprocess.run(
         [
             "bazel",
             "build",
             "--noremote_accept_cached",
-            "//docs:collected_files_for_score_source_code_linker",
+            get_env("SOURCE_CODE_LINKER"),
         ],
         cwd=workspace,
     )
 
+    # Query where the output files are
     process = subprocess.Popen(
         [
             "bazel",
             "cquery",
-            "//docs:collected_files_for_score_source_code_linker",
+            get_env("SOURCE_CODE_LINKER"),
             "--output=files",
         ],
         cwd=workspace,
         stdout=subprocess.PIPE,
     )
 
-    output_files = process.stdout.readline().decode().strip() if process.stdout else ""
+    source_code_linker_file = (
+        process.stdout.readline().decode().strip() if process.stdout else ""
+    )
 
     os.chdir(workspace)
 
 sphinx_main(
     [
-        "docs",  # src dir
-        "_build",  # out dir
+        get_env("SOURCE_DIRECTORY"),
+        get_env("BUILD_DIRECTORY"),
         "-W",  # treat warning as errors
         "--keep-going",  # do not abort after one error
         "-T",  # show details in case of errors in extensions
         "--jobs",
         "auto",
         "--conf-dir",
-        "docs",
-        f"--define=source_code_linker_file={output_files}",
+        get_env("CONF_DIRECTORY"),
+        f"--define=source_code_linker_file={source_code_linker_file}",
     ]
 )

@@ -41,7 +41,7 @@ load("@rules_python//sphinxdocs:sphinx.bzl", "sphinx_build_binary", "sphinx_docs
 
 sphinx_requirements = all_requirements + ["@rules_python//python/runfiles", ":plantuml_for_python"]
 
-def all_docs_targets():
+def all_docs_targets(source_code_linker):
     """
     Creates all targets related to documentation.
 
@@ -49,7 +49,7 @@ def all_docs_targets():
     """
 
     # Run-time build of documentation, incl. incremental build support.
-    incremental()
+    incremental(source_code_linker=source_code_linker)
 
     #sphinx-autobuild, used for no IDE live preview
     live_preview()
@@ -64,13 +64,14 @@ def all_docs_targets():
     ide_support()
 
     # creates :docs target for build time documentation
-    docs()
+    docs(source_code_linker=source_code_linker)
 
-def incremental(name = "incremental", extra_dependencies = list()):
+def incremental(source_code_linker, name = "incremental", extra_dependencies = list()):
     """
     A target for building docs incrementally at runtime.
 
     Args:
+        source_code_linker: The source code linker file to be used for linking source code to documentation.
         name: Optional custom name for the target. Defaults to "incremental".
         extra_dependencies: Additional dependencies besides the centrally maintained "sphinx_requirements".
     """
@@ -78,9 +79,15 @@ def incremental(name = "incremental", extra_dependencies = list()):
 
     py_binary(
         name = name,
-        srcs = ["_tooling/incremental.py"],
-        data = [":collected_files_for_score_source_code_linker"],
+        srcs = ["//docs:_tooling/incremental.py"],
+        data = [source_code_linker],
         deps = dependencies,
+        env = {
+            "SOURCE_CODE_LINKER": source_code_linker,
+            "SOURCE_DIRECTORY": "docs2",
+            "CONF_DIRECTORY": "docs2",
+            "BUILD_DIRECTORY": "_build",
+        },
     )
 
 def plantuml_bzl():
@@ -93,8 +100,6 @@ def plantuml_bzl():
         ],
     )
 
-    # Note: this is the old comment. copy pasted here.
-
     # This makes it possible for py_venv to depend on plantuml.
     # Note: py_venv can only depend on py_library.
     # TODO: Investigate if this can be simplified with a custom bzl rule
@@ -103,7 +108,7 @@ def plantuml_bzl():
     #       see https://github.com/bazelbuild/rules_python/blob/main/sphinxdocs/private/sphinx.bzl
     py_library(
         name = "plantuml_for_python",
-        srcs = ["_tooling/dummy.py"],
+        srcs = ["//docs:_tooling/dummy.py"],
         data = [
             ":plantuml",
         ],
@@ -112,7 +117,7 @@ def plantuml_bzl():
 def live_preview():
     py_binary(
         name = "live_preview",
-        srcs = ["_tooling/live_preview.py"],
+        srcs = ["//docs:_tooling/live_preview.py"],
         deps = sphinx_requirements,
     )
 
@@ -123,7 +128,7 @@ def ide_support():
         deps = sphinx_requirements,
     )
 
-def docs():
+def docs(source_code_linker):
     sphinx_docs(
         name = "docs",
         srcs = native.glob([
@@ -144,7 +149,7 @@ def docs():
             "-W",
             "--keep-going",
             # This is 'overwriting' the configuration parameter inside sphinx. As we only get this information during runtime
-            "--define=source_code_linker_file=$(location :collected_files_for_score_source_code_linker)",
+            "--define=source_code_linker_file=$(location {})".format(source_code_linker),
         ],
         formats = [
             "html",
@@ -154,7 +159,7 @@ def docs():
             "manual",
         ],
         tools = [
-            ":collected_files_for_score_source_code_linker",
+            source_code_linker,
             ":plantuml",
         ],
     )
