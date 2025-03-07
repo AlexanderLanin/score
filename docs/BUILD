@@ -65,10 +65,15 @@ pkg_tar(
 # - `docs:plantuml` and `:plantuml_for_python` targets, to be used as dependencies for plantuml generation
 all_docs_targets()
 
+filegroup(
+    name = "score_metamodel_sources",
+    srcs = glob(["_tooling/extensions/score_metamodel/**/*.py"]),
+)
+
 score_py_pytest(
     name = "score_metamodel_test",
     size = "small",
-    srcs = glob(["_tooling/extensions/score_metamodel/**/*.py"]),
+    srcs = [":score_metamodel_sources"],
     visibility = ["//visibility:public"],
 )
 
@@ -99,8 +104,10 @@ score_py_pytest(
 
 # Trigger source code linker on these files.
 parse_source_files_for_needs_links(
+    srcs = [
+        ":score_metamodel_sources",
+    ],
     deps = [
-        ":score_metamodel_test", # score_metamodel incl tests
         ":score_source_code_linker",
     ],
 )
