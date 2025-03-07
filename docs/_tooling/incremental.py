@@ -12,10 +12,15 @@
 # *******************************************************************************
 
 import argparse
+import logging
 import os
 import subprocess
+import sys
+from pathlib import Path
+from pprint import pprint
 
 import debugpy
+from python.runfiles import Runfiles
 from sphinx.cmd.build import main as sphinx_main
 
 parser = argparse.ArgumentParser()
@@ -32,7 +37,48 @@ if args.debug:
 
 # sphinx will print relative paths to the current directory.
 # Change to the workspace root so that the paths are readable and clickable.
-workspace = os.getenv("BUILD_WORKSPACE_DIRECTORY")
+
+logger = logging.getLogger(__name__)
+
+
+def get_runfiles_dir() -> Path:
+    if r := Runfiles.Create():
+        # Runfiles are only available when running in Bazel.
+        # bazel build and bazel run are both supported.
+        # i.e. `bazel build //docs:docs` and `bazel run //docs:incremental`.
+        logger.debug("Using runfiles to determine plantuml path.")
+
+        runfiles_dir = Path(r.EnvVars()["RUNFILES_DIR"])
+
+        if not runfiles_dir.exists():
+            sys.exit(
+                f"Could not find runfiles at {runfiles_dir}. Have a look at "
+                "README.md for instructions on how to build docs."
+            )
+
+    else:
+        # The only way to land here is when running from within the virtual
+        # environment created by the `docs:ide_support` rule in the BUILD file.
+        # i.e. esbonio or manual sphinx-build execution within the virtual
+        # environment.
+        # We'll still use the plantuml binary from the bazel build.
+        # But we need to find it first.
+        logger.debug("Running outside bazel.")
+
+        git_root = Path(__file__).resolve().parents[3]
+        assert (git_root / ".git").exists(), (
+            f"Could not find git root. Assumed path: {git_root}"
+        )
+
+        runfiles_dir = git_root / "bazel-bin" / "docs" / "ide_support.runfiles"
+        if not runfiles_dir.exists():
+            sys.exit(
+                f"Could not find ide_support.runfiles at {runfiles_dir}. "
+                "Have a look at README.md for instructions on how to build docs."
+            )
+
+    return runfiles_dir
+
 
 # Initialize with a default value
 source_code_linker_file = ""
@@ -46,49 +92,46 @@ def get_env(name):
     return val
 
 
+# e.g. /absolute_path/bazel-out/k8-fastbuild/bin/docs2/incremental.runfiles/
+runfiles_dir = get_runfiles_dir()
+print(f"{runfiles_dir=}")
+# optional idea: relative_path can be build by splitting the 'runfiles_dir' at
+# '/bazel-out/' and taking the second part.
+
+workspace = os.getenv("BUILD_WORKSPACE_DIRECTORY")
 if workspace:
-    # This will gives us all 'output files' and their location that are required
-    #  by the 'source_link' extensions
-    # Build and run SOURCE_CODE_LINKER (it's run at build time)
-    subprocess.run(
-        [
-            "bazel",
-            "build",
-            "--noremote_accept_cached",
-            get_env("SOURCE_CODE_LINKER"),
-        ],
-        cwd=workspace,
-    )
-
-    # Query where the output files are
-    process = subprocess.Popen(
-        [
-            "bazel",
-            "cquery",
-            get_env("SOURCE_CODE_LINKER"),
-            "--output=files",
-        ],
-        cwd=workspace,
-        stdout=subprocess.PIPE,
-    )
-
-    source_code_linker_file = (
-        process.stdout.readline().decode().strip() if process.stdout else ""
-    )
-
     os.chdir(workspace)
 
-sphinx_main(
-    [
-        get_env("SOURCE_DIRECTORY"),
-        get_env("BUILD_DIRECTORY"),
-        "-W",  # treat warning as errors
-        "--keep-going",  # do not abort after one error
-        "-T",  # show details in case of errors in extensions
-        "--jobs",
-        "auto",
-        "--conf-dir",
-        get_env("CONF_DIRECTORY"),
-        f"--define=source_code_linker_file={source_code_linker_file}",
-    ]
-)
+# SOURCE_CODE_LINKER = //docs2:all_module_source_files
+filename = get_env("SOURCE_CODE_LINKER").split(":")[-1] + ".txt"
+source_code_linker_file = runfiles_dir.parent / filename
+assets_dir_prefix = runfiles_dir / "_main/docs"
+
+print(f"{source_code_linker_file=}")
+print(f"{assets_dir_prefix=}")
+
+
+if not source_code_linker_file.exists():
+    raise FileNotFoundError(
+        f"Source code linker file not found: {source_code_linker_file}"
+    )
+if not assets_dir_prefix.exists():
+    raise FileNotFoundError(f"Assets directory not found: {assets_dir_prefix}")
+
+arguments = [
+    get_env("SOURCE_DIRECTORY"),
+    get_env("BUILD_DIRECTORY"),
+    "-W",  # treat warning as errors
+    "--keep-going",  # do not abort after one error
+    "-T",  # show details in case of errors in extensions
+    "--jobs",
+    "auto",
+    "--conf-dir",
+    get_env("CONF_DIRECTORY"),
+    f"--define=source_code_linker_file={source_code_linker_file}",
+    f"--define=html_static_path={assets_dir_prefix}/_assets,{assets_dir_prefix}/_tooling/assets",
+]
+
+pprint(arguments)
+
+sphinx_main(arguments)

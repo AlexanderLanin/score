@@ -15,7 +15,7 @@ load("//docs:_tooling/docs.bzl", "all_docs_targets")
 load("//docs:_tooling/extensions/score_source_code_linker/collect_source_files.bzl", "parse_source_files_for_needs_links")
 
 parse_source_files_for_needs_links(
-    name="all_module_source_files",
+    name = "all_module_source_files",
     # no source files added for now
 )
 
@@ -25,4 +25,9 @@ parse_source_files_for_needs_links(
 # - `docs:ide_support` for creating python virtualenv for IDE support
 # - `docs:docs` for building documentation at build-time
 # - `docs:plantuml` and `:plantuml_for_python` targets, to be used as dependencies for plantuml generation
-all_docs_targets(source_code_linker="//docs2:all_module_source_files")
+all_docs_targets(
+    build_dir_for_incremental = "_build2",
+    conf_dir = "docs2",
+    source_code_linker = "//docs2:all_module_source_files",
+    source_dir = "docs2",
+)

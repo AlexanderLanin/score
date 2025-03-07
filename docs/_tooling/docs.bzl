@@ -17,7 +17,6 @@ load("@pip_sphinx//:requirements.bzl", "all_requirements")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_python//sphinxdocs:sphinx.bzl", "sphinx_build_binary", "sphinx_docs")
 
-
 # Multiple approaches are available to build the same documentation output:
 #
 # 1. **Esbonio via IDE support (`ide_support` target)**:
@@ -38,20 +37,25 @@ load("@rules_python//sphinxdocs:sphinx.bzl", "sphinx_build_binary", "sphinx_docs
 #    - Runs the documentation build in a Bazel sandbox, ensuring clean, isolated builds.
 #    - Less convenient for frequent local edits but ensures build reproducibility.
 
-
 sphinx_requirements = all_requirements + ["@rules_python//python/runfiles", ":plantuml_for_python"]
 
-def all_docs_targets(source_code_linker):
+def all_docs_targets(source_code_linker, source_dir = "docs", conf_dir = "docs", build_dir_for_incremental = "_build"):
     """
     Creates all targets related to documentation.
 
     By using this function, you'll get any and all updates for documentation targets in one place.
+
+    Args:
+        source_code_linker: The source code linker file to be used for linking source code to documentation.
+        source_dir: Directory containing the source files for documentation. Defaults to "docs".
+        conf_dir: Directory containing the Sphinx configuration. Defaults to "docs".
+        build_dir_for_incremental: Directory to output the built documentation for incremental builds. Defaults to "_build".
     """
 
     # Run-time build of documentation, incl. incremental build support.
-    incremental(source_code_linker=source_code_linker)
+    incremental(source_code_linker = source_code_linker, source_dir = source_dir, conf_dir = conf_dir, build_dir = build_dir_for_incremental)
 
-    #sphinx-autobuild, used for no IDE live preview
+    # sphinx-autobuild, used for no IDE live preview
     live_preview()
 
     # Virtual python environment for working on the documentation (esbonio).
@@ -64,29 +68,32 @@ def all_docs_targets(source_code_linker):
     ide_support()
 
     # creates :docs target for build time documentation
-    docs(source_code_linker=source_code_linker)
+    docs(source_code_linker = source_code_linker)
 
-def incremental(source_code_linker, name = "incremental", extra_dependencies = list()):
+def incremental(source_code_linker, source_dir = "docs", conf_dir = "docs", build_dir = "_build", name = "incremental", extra_dependencies = list()):
     """
     A target for building docs incrementally at runtime.
 
     Args:
         source_code_linker: The source code linker file to be used for linking source code to documentation.
+        source_dir: Directory containing the source files for documentation.
+        conf_dir: Directory containing the Sphinx configuration.
+        build_dir: Directory to output the built documentation.
         name: Optional custom name for the target. Defaults to "incremental".
         extra_dependencies: Additional dependencies besides the centrally maintained "sphinx_requirements".
     """
     dependencies = sphinx_requirements + extra_dependencies
-
     py_binary(
         name = name,
         srcs = ["//docs:_tooling/incremental.py"],
-        data = [source_code_linker],
+        data = [source_code_linker, "//docs:docs_assets"],
         deps = dependencies,
         env = {
             "SOURCE_CODE_LINKER": source_code_linker,
-            "SOURCE_DIRECTORY": "docs2",
-            "CONF_DIRECTORY": "docs2",
-            "BUILD_DIRECTORY": "_build",
+            "SOURCE_DIRECTORY": source_dir,
+            "CONF_DIRECTORY": conf_dir,
+            "BUILD_DIRECTORY": build_dir,
+            # "ASSETS_DIR": "docs_assets",
         },
     )
 

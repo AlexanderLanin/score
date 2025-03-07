@@ -61,11 +61,24 @@ pkg_tar(
 # macros, and thus must be visible to other packages. They should only be
 # referenced by the //docs.bzl macros.
 exports_files(
-    glob(["_tooling/**/*.py"]) + ["_tooling/requirements_lock.txt"],
+    glob(
+        [
+            "_tooling/**/*.py",
+            # "_assets/**",
+            # "_tooling/assets/**",
+        ],
+    ) + ["_tooling/requirements_lock.txt"],
     visibility = ["//visibility:public"],
 )
 
-
+filegroup(
+    name = "docs_assets",
+    srcs = glob([
+        "_assets/**",
+        "_tooling/assets/**",
+    ]),
+    visibility = ["//visibility:public"],
+)
 
 # Creates all documentation targets:
 # - `docs:incremental` for building docs incrementally at runtime
