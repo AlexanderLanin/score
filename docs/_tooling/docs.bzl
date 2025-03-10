@@ -127,7 +127,9 @@ def live_preview():
         name = "live_preview",
         srcs = ["//docs:_tooling/incremental.py"],
         deps = sphinx_requirements,
-            "ACTION": "incremental", # TODO
+        env = {
+            "ACTION": "live_preview", # TODO
+        }
     )
 
 def ide_support():

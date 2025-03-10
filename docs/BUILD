@@ -129,9 +129,8 @@ score_py_pytest(
 parse_source_files_for_needs_links(
     name = "score_source_code_parser",
     srcs = [
+        # Note: you can add filegroups, globs, or entire targets here.
         ":score_metamodel_sources",
-    ],
-    deps = [
         ":score_source_code_linker",
     ],
 )
