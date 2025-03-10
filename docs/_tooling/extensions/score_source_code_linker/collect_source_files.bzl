@@ -129,6 +129,7 @@ def parse_source_files_for_needs_links(
 
     # Binary which based a list of source files, parses them for links to needs-elements,
     # and writes the result to a file.
+    # Used by _collect_and_parse_source_files() rule.
     py_binary(
         name = "_source_files_parser",
         srcs = ["//docs:_tooling/extensions/score_source_code_linker/parse_source_files.py"],

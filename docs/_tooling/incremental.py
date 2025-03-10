@@ -95,8 +95,10 @@ def get_env(name):
 # e.g. /absolute_path/bazel-out/k8-fastbuild/bin/docs2/incremental.runfiles/
 runfiles_dir = get_runfiles_dir()
 print(f"{runfiles_dir=}")
-# optional idea: relative_path can be build by splitting the 'runfiles_dir' at
-# '/bazel-out/' and taking the second part.
+# runfiles_dir points to a cache directory which has a new hash every time.
+# Use the relative path that is available from workspace root.
+relative_path = Path("bazel-out") / str(runfiles_dir).split('/bazel-out/', 1)[-1]
+print(f"{relative_path=}") # TODO
 
 workspace = os.getenv("BUILD_WORKSPACE_DIRECTORY")
 if workspace:
@@ -104,19 +106,22 @@ if workspace:
 
 # SOURCE_CODE_LINKER = //docs2:all_module_source_files
 filename = get_env("SOURCE_CODE_LINKER").split(":")[-1] + ".txt"
-source_code_linker_file = runfiles_dir.parent / filename
-assets_dir_prefix = runfiles_dir / "_main/docs"
+source_code_linker_file = str(relative_path.parent) + "/" + filename
 
-print(f"{source_code_linker_file=}")
+# Asset_dir is interpreted by sphinx. Paths are relative conf.py (conf_dir)
+
+assets_dir_prefix = str(Path("..") / relative_path) + "/" + "_main/docs"
+
+print(f"{source_code_linker_file=}") # TODO
 print(f"{assets_dir_prefix=}")
 
-
-if not source_code_linker_file.exists():
-    raise FileNotFoundError(
-        f"Source code linker file not found: {source_code_linker_file}"
-    )
-if not assets_dir_prefix.exists():
-    raise FileNotFoundError(f"Assets directory not found: {assets_dir_prefix}")
+# TODO
+# if not source_code_linker_file.exists():
+#     raise FileNotFoundError(
+#         f"Source code linker file not found: {source_code_linker_file}"
+#     )
+# if not assets_dir_prefix.exists():
+#     raise FileNotFoundError(f"Assets directory not found: {assets_dir_prefix}")
 
 arguments = [
     get_env("SOURCE_DIRECTORY"),

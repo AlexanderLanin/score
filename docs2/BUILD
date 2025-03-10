@@ -19,9 +19,13 @@ load("//docs:_tooling/docs.bzl", "docs")
 # - `:incremental` for building docs incrementally at runtime
 # - `:live_preview` for live preview in the browser without an IDE
 # - `:ide_support` for creating python virtualenv for IDE support
+filegroup(
+    name = "files",
+    srcs = ["test.py"],
+)
 docs(
     build_dir_for_incremental = "_build2",
     conf_dir = "docs2",
     source_dir = "docs2",
-    # source_files_to_scan_for_needs_links = filegroup, binaries, whatever
+    source_files_to_scan_for_needs_links = [":files"],
 )

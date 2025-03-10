@@ -21,8 +21,7 @@ load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_python//python:pip.bzl", "compile_pip_requirements")
-load("//docs:_tooling/docs.bzl", "all_docs_targets")
-load("//docs:_tooling/extensions/score_source_code_linker/collect_source_files.bzl", "parse_source_files_for_needs_links")
+load("//docs:_tooling/docs.bzl", "docs")
 load("//tools/dash:dash.bzl", "dash_license_checker")
 load("//tools/testing/pytest:defs.bzl", "score_py_pytest")
 
@@ -86,11 +85,21 @@ filegroup(
 # - `docs:ide_support` for creating python virtualenv for IDE support
 # - `docs:docs` for building documentation at build-time
 # - `docs:plantuml` and `:plantuml_for_python` targets, to be used as dependencies for plantuml generation
-all_docs_targets(source_code_linker = "//docs:score_source_code_parser")
+docs(source_files_to_scan_for_needs_links=[
+        # Note: you can add filegroups, globs, or entire targets here.
+        ":score_metamodel_sources",
+        ":score_source_code_linker",
+    ])
 
 filegroup(
     name = "score_metamodel_sources",
     srcs = glob(["_tooling/extensions/score_metamodel/**/*.py"]),
+)
+
+filegroup(
+    name = "docs_stuff",
+    srcs = glob(["_tooling/extensions/**"]),
+    visibility = ["//visibility:public"],
 )
 
 score_py_pytest(
@@ -118,22 +127,6 @@ score_py_pytest(
     srcs = glob(["_tooling/extensions/score_source_code_linker/**/*.py"]),
 )
 
-# Needed to make the file parser executeable and findable for the aspect below
-
-# Running this executes the `collect_source_files.bzl` aspect.
-# Collects all source files from specified targets in 'deps', and makes them available for parsing for the source_code_linker
-
-# For more information see documentation at _tooling/extensions/score_source_code_linker/README.md
-
-# Trigger source code linker on these files.
-parse_source_files_for_needs_links(
-    name = "score_source_code_parser",
-    srcs = [
-        # Note: you can add filegroups, globs, or entire targets here.
-        ":score_metamodel_sources",
-        ":score_source_code_linker",
-    ],
-)
 
 # Needed for Dash tool to check python dependency licenses.
 filegroup(

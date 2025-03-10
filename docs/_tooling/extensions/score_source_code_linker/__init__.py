@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 import json
+import os
 from copy import deepcopy
 
 from sphinx.application import Sphinx  # type: ignore
@@ -41,6 +42,9 @@ def setup(app: Sphinx) -> dict:
     """
     app.connect("env-updated", add_source_link)
     app.add_config_value("source_code_linker_file", "", rebuild="env")
+    print("===========")# TODO
+    print("LOADED SOURCE CODE LINKER")
+    print("===========")
     return {
         "version": "0.1",
         "parallel_read_safe": True,
@@ -83,6 +87,7 @@ def add_source_link(app: Sphinx, env) -> None:
     json_paths = find_dir_paths(app)
     for path in json_paths:
         try:
+            print(f"Opening {path} from CWD {os.getcwd()}, PWD {os.environ.get('PWD')}")
             with open(path) as f:
                 gh_json = json.load(f)
             for id, link in gh_json.items():
@@ -93,6 +98,7 @@ def add_source_link(app: Sphinx, env) -> None:
                     need = needs_copy[id]  # NeedsInfoType
                     Needs_Data.remove_need(need["id"])
                     need["source_code_link"] = ",".join(link)
+                    print(f"NOW ADDING LINKS TO NEED: {need['id']}")
                     Needs_Data.add_need(need)
                 except KeyError:
                     # NOTE: manipulating link to remove git-hash,
