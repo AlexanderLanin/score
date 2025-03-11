@@ -156,11 +156,6 @@ def _docs(source_code_linker):
             "**/*.html",
             "**/*.css",
             "**/*.puml",
-            # Include the docs tooling itself
-            # Note: we don't use py_library here to make it as close as possible to docs:incremental.
-            "**/*.py",
-            "**/*.yaml",
-            "**/*.json",
         ]),
         config = "conf.py",
         extra_opts = [
@@ -184,5 +179,6 @@ def _docs(source_code_linker):
 
     sphinx_build_binary(
         name = "sphinx_build",
-        deps = sphinx_requirements,
+ra#        deps = sphinx_requirements,
+        data = ["//docs:docs_assets", "//docs:docs_stuff"],
     )

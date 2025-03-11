@@ -18,6 +18,9 @@
 
 import os
 import sys
+from pathlib import Path
+
+from python.runfiles import Runfiles  # type: ignore
 
 # sys.path extension for local files is needed, because the conf.py file is not
 # executed, but imported by Sphinx
@@ -33,25 +36,18 @@ release = "0.1"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 
-## TODO!
-# für incremental:
-extension_path = os.path.abspath("../bazel-out/k8-fastbuild/bin/docs2/incremental.runfiles/_main/docs/_tooling/extensions")
-# für docs:docs TODO!
+if r := Runfiles.Create():
+    # :docs & :incremental
+    # Runfiles are only available when running in Bazel.
+    # bazel build and bazel run are both supported.
+    # i.e. `bazel build //docs:docs` and `bazel run //docs:incremental`.
+    runfiles_dir = Path(r.EnvVars()["RUNFILES_DIR"])
+    sys.path.insert(0, str(runfiles_dir / "_main" / "docs" / "_tooling" / "extensions"))
+else:
+    # esbonio, bazel-bin/docs2/incremental & bazel-bin/docs2/live_preview
+    ...
 
-# ==>>  "../docs/_tooling/extensions"
 
-sys.path.insert(0, os.path.abspath("../docs/_tooling/extensions"))
-print(f"extension_path: {extension_path}")
-# /workspaces/score/bazel-out/k8-fastbuild/bin/docs2/incremental.runfiles/_main/docs/_tooling/extensions << ist
-# /workspaces/score/bazel-out/k8-fastbuild/bin/docs2/incremental.runfiles/_main/docs/_tooling/extensions
-
-# e.g.:
-# /workspaces/score/bazel-out/k8-fastbuild/bin/docs2/incremental.runfiles/_main/docs/_tooling/extensions/score_plantuml.py
-
-sys.path.insert(
-    0,
-    extension_path,
-)  # TODO
 
 extensions = [
     "sphinx_design",
