@@ -90,13 +90,15 @@ def _incremental(source_code_linker, source_dir = "docs", conf_dir = "docs", bui
         extra_dependencies: Additional dependencies besides the centrally maintained "sphinx_requirements".
     """
     dependencies = sphinx_requirements + extra_dependencies
+    # Hint: "files" is a single file and not a list!
+    source_code_links = source_code_linker[SourceCodeLinks].file.path
     py_binary(
         name = name,
         srcs = ["//docs:_tooling/incremental.py"],
         data = [source_code_linker, "//docs:docs_assets", "//docs:docs_stuff"],
         deps = dependencies,
         env = {
-            "SOURCE_CODE_LINKER": source_code_linker,
+            "SOURCE_CODE_LINKS": source_code_links,
             "SOURCE_DIRECTORY": source_dir,
             "CONF_DIRECTORY": conf_dir,
             "BUILD_DIRECTORY": build_dir,
@@ -126,6 +128,8 @@ def _plantuml_bzl():
         srcs = ["//docs:_tooling/dummy.py"],
         data = [
             ":plantuml",
+            "//docs:docs_assets",
+            "//docs:docs_stuff"
         ],
     )
 
@@ -144,6 +148,9 @@ def _ide_support():
         name = "ide_support",
         venv_name = ".venv_docs",
         deps = sphinx_requirements,
+        # data is avialable in next release after 12.03.2025
+        # until then we inject data into plantuml_for_python
+        # data = ["//docs:docs_assets", "//docs:docs_stuff"]
     )
 
 def _docs(source_code_linker):

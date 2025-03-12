@@ -21,6 +21,13 @@ CollectedFilesInfo = provider(
     },
 )
 
+SourceCodeLinks = provider(
+    doc = "All source code links found in the source files.",
+    fields = {
+        "file": "Path to json file containing the source code links.",
+    },
+)
+
 def _extract_source_files(rule, attr):
     collected_source_files = []
     if hasattr(rule.attr, attr):
@@ -79,6 +86,7 @@ def _collect_and_parse_source_files_impl(ctx):
     accumulated = []
     for dep in ctx.attr.deps:
         accumulated.append(dep[CollectedFilesInfo].files)
+
     # Flatten the list of files
     all_files = depset(transitive = accumulated).to_list()
 
@@ -88,8 +96,7 @@ def _collect_and_parse_source_files_impl(ctx):
 
     ctx.actions.write(srcs_filelist_file, content)
 
-    out_filename = ctx.label.name
-    parsed_sources_json_file = ctx.actions.declare_file("%s.txt" % out_filename)
+    parsed_sources_json_file = ctx.actions.declare_file("%s.json" % ctx.label.name)
 
     args = ctx.actions.args()
     args.add(srcs_filelist_file)
@@ -102,7 +109,13 @@ def _collect_and_parse_source_files_impl(ctx):
         outputs = [parsed_sources_json_file],
     )
 
-    return [DefaultInfo(files = depset([parsed_sources_json_file]), runfiles = ctx.runfiles([parsed_sources_json_file]))]
+    return [
+        DefaultInfo(
+            files = parsed_sources_json_file,
+            runfiles = ctx.runfiles([parsed_sources_json_file]),
+        ),
+        SourceCodeLinks(file = parsed_sources_json_file),
+    ]
 
 _collect_and_parse_source_files = rule(
     implementation = _collect_and_parse_source_files_impl,
@@ -139,5 +152,5 @@ def parse_source_files_for_needs_links(
     # Rule which collects source files (at build time) and calls the binary to parse them (at runtime)???
     _collect_and_parse_source_files(
         name = name,
-        deps = srcs, # how do we name this? # TODO
+        deps = srcs,  # how do we name this? # TODO
     )
