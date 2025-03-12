@@ -179,6 +179,6 @@ def _docs(source_code_linker):
 
     sphinx_build_binary(
         name = "sphinx_build",
-ra#        deps = sphinx_requirements,
+        deps = sphinx_requirements,
         data = ["//docs:docs_assets", "//docs:docs_stuff"],
     )
