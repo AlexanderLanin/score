@@ -111,7 +111,7 @@ def _collect_and_parse_source_files_impl(ctx):
 
     return [
         DefaultInfo(
-            files = parsed_sources_json_file,
+            files = depset([parsed_sources_json_file]),
             runfiles = ctx.runfiles([parsed_sources_json_file]),
         ),
         SourceCodeLinks(file = parsed_sources_json_file),
@@ -138,6 +138,8 @@ def parse_source_files_for_needs_links(
         name = "collected_files_for_score_source_code_linker"):
     """
     Collects and parses source files for linking source code to documentation.
+
+    Returns Label for the bazel rule.
     """
 
     # Binary which based a list of source files, parses them for links to needs-elements,
@@ -154,3 +156,6 @@ def parse_source_files_for_needs_links(
         name = name,
         deps = srcs,  # how do we name this? # TODO
     )
+
+    pkg = native.package_name()
+    return Label("@//" + pkg + ":" + name)

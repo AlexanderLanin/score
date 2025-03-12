@@ -51,7 +51,7 @@ def add_source_link(app: Sphinx, env) -> None:
     path = app.config.source_code_linker_file
     try:
         print(f"Opening {path} from CWD {os.getcwd()}, PWD {os.environ.get('PWD')}")
-        with open(path, "w") as f:
+        with open(path) as f:
             gh_json = json.load(f)
         for id, link in gh_json.items():
             id = id.strip()

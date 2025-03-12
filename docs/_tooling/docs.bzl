@@ -16,7 +16,7 @@ load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library", "py_venv")
 load("@pip_sphinx//:requirements.bzl", "all_requirements")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_python//sphinxdocs:sphinx.bzl", "sphinx_build_binary", "sphinx_docs")
-load("//docs:_tooling/extensions/score_source_code_linker/collect_source_files.bzl", "parse_source_files_for_needs_links")
+load("//docs:_tooling/extensions/score_source_code_linker/collect_source_files.bzl", "parse_source_files_for_needs_links", "SourceCodeLinks")
 
 # Multiple approaches are available to build the same documentation output:
 #
@@ -46,6 +46,9 @@ def docs(source_files_to_scan_for_needs_links = None, source_dir = "docs", conf_
 
     By using this function, you'll get any and all updates for documentation targets in one place.
 
+    Current restrictions:
+    * only one docs() call per BUILD file is supported, as name mangling is not implemented yet.
+
     Args:
         source_files_to_scan_for_needs_links: The source files to scan for documentation links and requirements.
         source_dir: Directory containing the source files for documentation. Defaults to "docs".
@@ -54,44 +57,51 @@ def docs(source_files_to_scan_for_needs_links = None, source_dir = "docs", conf_
     """
 
     # Parse source files for needs links
-    parse_source_files_for_needs_links(
+    source_code_linker = parse_source_files_for_needs_links(
         name = "score_source_code_parser",
         srcs = source_files_to_scan_for_needs_links if source_files_to_scan_for_needs_links else [],
     )
 
+    # Get the output of source_code_linker
+    # Does not work:
+    # rule_info = native.existing_rule(source_code_linker.name)
+    # source_code_links = rule_info[SourceCodeLinks].file.path
+    # Workaround:
+    source_code_links = source_code_linker.name + ".json"
+
     # Run-time build of documentation, incl. incremental build support.
-    _incremental(source_code_linker = ":score_source_code_parser", source_dir = source_dir, conf_dir = conf_dir, build_dir = build_dir_for_incremental)
+    _incremental(source_code_linker, source_code_links, source_dir = source_dir, conf_dir = conf_dir, build_dir = build_dir_for_incremental)
 
     # sphinx-autobuild, used for no IDE live preview
     _live_preview()
 
-    # Virtual python environment for working on the documentation (esbonio).
-    # incl. python support when working on conf.py and sphinx extensions.
-
     # create  :plantuml & :plantuml_for_python targets
     _plantuml_bzl()
 
+    # Virtual python environment for working on the documentation (esbonio).
+    # incl. python support when working on conf.py and sphinx extensions.
     # creates :ide_support target for virtualenv
     _ide_support()
 
     # creates :docs target for build time documentation
-    _docs(source_code_linker = ":score_source_code_parser")
+    _docs(source_code_linker, source_code_links)
 
-def _incremental(source_code_linker, source_dir = "docs", conf_dir = "docs", build_dir = "_build", name = "incremental", extra_dependencies = list()):
+def _incremental(source_code_linker, source_code_links, source_dir = "docs", conf_dir = "docs", build_dir = "_build", name = "incremental", extra_dependencies = list()):
     """
     A target for building docs incrementally at runtime.
 
     Args:
-        source_code_linker: The source code linker file to be used for linking source code to documentation.
+        source_code_linker: The source code linker target to be used for linking source code to documentation.
+        source_code_links: The output from the source code linker.
         source_dir: Directory containing the source files for documentation.
         conf_dir: Directory containing the Sphinx configuration.
         build_dir: Directory to output the built documentation.
         name: Optional custom name for the target. Defaults to "incremental".
         extra_dependencies: Additional dependencies besides the centrally maintained "sphinx_requirements".
     """
+
     dependencies = sphinx_requirements + extra_dependencies
-    # Hint: "files" is a single file and not a list!
-    source_code_links = source_code_linker[SourceCodeLinks].file.path
+
     py_binary(
         name = name,
         srcs = ["//docs:_tooling/incremental.py"],
@@ -119,7 +129,7 @@ def _plantuml_bzl():
 
     # This makes it possible for py_venv to depend on plantuml.
     # Note: py_venv can only depend on py_library.
-    # TODO: Investigate if this can be simplified with a custom bzl rule
+    # TODO: Investigatee simplified with a custom bzl rule
     #       which replaces / wraps py_venv.
     #       see https://github.com/aspect-build/rules_py/blob/main/py/private/py_venv.bzl
     #       see https://github.com/bazelbuild/rules_python/blob/main/sphinxdocs/private/sphinx.bzl
@@ -139,6 +149,10 @@ def _live_preview():
         srcs = ["//docs:_tooling/incremental.py"],
         deps = sphinx_requirements,
         env = {
+            "SOURCE_CODE_LINKS": source_code_links,
+            "SOURCE_DIRECTORY": source_dir,
+            "CONF_DIRECTORY": conf_dir,
+            "BUILD_DIRECTORY": build_dir,
             "ACTION": "live_preview", # TODO
         }
     )
@@ -153,7 +167,7 @@ def _ide_support():
         # data = ["//docs:docs_assets", "//docs:docs_stuff"]
     )
 
-def _docs(source_code_linker):
+def _docs(source_code_linker, _source_code_links):
     sphinx_docs(
         name = "docs",
         srcs = native.glob([

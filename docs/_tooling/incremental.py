@@ -22,6 +22,7 @@ from pprint import pprint
 import debugpy
 from python.runfiles import Runfiles
 from sphinx.cmd.build import main as sphinx_main
+from sphinx_autobuild.__main__ import main as sphinx_autobuild_main  # type: ignore
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -104,9 +105,9 @@ workspace = os.getenv("BUILD_WORKSPACE_DIRECTORY")
 if workspace:
     os.chdir(workspace)
 
-# SOURCE_CODE_LINKER = //docs2:all_module_source_files
-filename = get_env("SOURCE_CODE_LINKER").split(":")[-1] + ".txt"
-source_code_linker_file = str(relative_path.parent) + "/" + filename
+# # SOURCE_CODE_LINKER = //docs2:all_module_source_files
+# filename = get_env("SOURCE_CODE_LINKS")
+# source_code_linker_file = str(relative_path.parent) + "/" + filename
 
 # Asset_dir is interpreted by sphinx. Paths are relative conf.py (conf_dir)
 
@@ -123,7 +124,7 @@ print(f"{assets_dir_prefix=}")
 # if not assets_dir_prefix.exists():
 #     raise FileNotFoundError(f"Assets directory not found: {assets_dir_prefix}")
 
-arguments = [
+base_arguments = [
     get_env("SOURCE_DIRECTORY"),
     get_env("BUILD_DIRECTORY"),
     "-W",  # treat warning as errors
@@ -133,10 +134,19 @@ arguments = [
     "auto",
     "--conf-dir",
     get_env("CONF_DIRECTORY"),
-    f"--define=source_code_linker_file={source_code_linker_file}",
-    f"--define=html_static_path={assets_dir_prefix}/_assets,{assets_dir_prefix}/_tooling/assets",
 ]
 
-pprint(arguments)
+action = get_env("ACTION")
+if action == "live_preview":
 
-sphinx_main(arguments)
+    sphinx_autobuild_main(
+        base_arguments
+    )
+else:
+    filename = get_env("SOURCE_CODE_LINKS")
+    source_code_linker_file = str(relative_path.parent) + "/" + filename
+    incremental_args = base_arguments + [
+        f"--define=source_code_linker_file={source_code_linker_file}",
+        f"--define=html_static_path={assets_dir_prefix}/_assets,{assets_dir_prefix}/_tooling/assets",
+    ]
+    sphinx_main(incremental_args)
