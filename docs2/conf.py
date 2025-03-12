@@ -18,9 +18,6 @@
 
 import os
 import sys
-from pathlib import Path
-
-from python.runfiles import Runfiles  # type: ignore
 
 # sys.path extension for local files is needed, because the conf.py file is not
 # executed, but imported by Sphinx
@@ -35,18 +32,8 @@ release = "0.1"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-
-if r := Runfiles.Create():
-    # :docs & :incremental
-    # Runfiles are only available when running in Bazel.
-    # bazel build and bazel run are both supported.
-    # i.e. `bazel build //docs:docs` and `bazel run //docs:incremental`.
-    runfiles_dir = Path(r.EnvVars()["RUNFILES_DIR"])
-    sys.path.insert(0, str(runfiles_dir / "_main" / "docs" / "_tooling" / "extensions"))
-else:
-    # esbonio, bazel-bin/docs2/incremental & bazel-bin/docs2/live_preview
-    ...
-
+if runfiles := os.getenv("RUNFILES_DIR"):
+    sys.path.insert(0, os.path.join(runfiles, "_main/docs/_tooling/extensions"))
 
 
 extensions = [

@@ -19,9 +19,13 @@
 import os
 import sys
 
-# sys.path extension for local files is needed, because the conf.py file is not
-# executed, but imported by Sphinx
-sys.path.insert(0, ".")
+# TODO: if we provide the extensions as py_library, we can remove this...
+# Originally the intention was better LSP support. But since we do not "import"
+# the extensions, but only use them in the extensions list, this is not needed
+# anymore.
+if runfiles := os.getenv("RUNFILES_DIR"):
+    sys.path.insert(0, os.path.join(runfiles, "_main/docs/_tooling/extensions"))
+
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -33,7 +37,7 @@ release = "0.1"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-sys.path.insert(0, os.path.abspath("_tooling/extensions"))
+# TODO: consider a score_everything extension? See also runfiles comment above!
 extensions = [
     "sphinx_design",
     "sphinx_needs",
@@ -45,6 +49,7 @@ extensions = [
     "score_layout",
 ]
 
+# TODO: move these to some score extension?!
 exclude_patterns = [
     # The following entries are not required when building the documentation
     # via 'bazel build //docs:docs', as that command runs in a sandboxed environment.
@@ -62,7 +67,10 @@ numfig = True
 
 # -- sphinx-needs configuration --------------------------------------------
 # Setting the needs layouts
+# TODO: move to score_layout extension?!
 needs_global_options = {"collapse": True}
+
+# TODO: move to source_code_linker extension?!
 needs_string_links = {
     "source_code_linker": {
         "regex": r"(?P<value>[^,]+)",

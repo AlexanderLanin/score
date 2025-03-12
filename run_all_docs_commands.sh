@@ -23,7 +23,7 @@ declare -A RESULTS
 # Run all the commands, print out the command and the result, and store results
 for cmd in "${COMMANDS[@]}"; do
   echo "Running command: $cmd"
-  if $cmd; then
+  if bash -c "$cmd"; then
     echo "Command succeeded"
     RESULTS["$cmd"]="✅"
   else
