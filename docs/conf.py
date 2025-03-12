@@ -46,8 +46,6 @@ if not runfiles:
 sys.path.insert(0, os.path.join(runfiles, "_main/docs/_tooling/extensions"))
 
 logger = logging.get_logger(__name__)
-logger.warning(f"runfiles: {runfiles}")
-logger.warning(f"sys.path: {sys.path}")
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information

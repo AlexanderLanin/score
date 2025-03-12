@@ -69,11 +69,8 @@ def docs(source_files_to_scan_for_needs_links = None, source_dir = "docs", conf_
     # Workaround:
     source_code_links = source_code_linker.name + ".json"
 
-    # Run-time build of documentation, incl. incremental build support.
+    # Run-time build of documentation, incl. incremental build support and non-IDE live preview.
     _incremental(source_code_linker, source_code_links, source_dir = source_dir, conf_dir = conf_dir, build_dir = build_dir_for_incremental)
-
-    # sphinx-autobuild, used for no IDE live preview
-    _live_preview()
 
     # create  :plantuml & :plantuml_for_python targets
     _plantuml_bzl()
@@ -86,9 +83,9 @@ def docs(source_files_to_scan_for_needs_links = None, source_dir = "docs", conf_
     # creates :docs target for build time documentation
     _docs(source_code_linker, source_code_links)
 
-def _incremental(source_code_linker, source_code_links, source_dir = "docs", conf_dir = "docs", build_dir = "_build", name = "incremental", extra_dependencies = list()):
+def _incremental(source_code_linker, source_code_links, source_dir = "docs", conf_dir = "docs", build_dir = "_build", extra_dependencies = list()):
     """
-    A target for building docs incrementally at runtime.
+    A target for building docs incrementally at runtime, incl live preview.
 
     Args:
         source_code_linker: The source code linker target to be used for linking source code to documentation.
@@ -96,14 +93,13 @@ def _incremental(source_code_linker, source_code_links, source_dir = "docs", con
         source_dir: Directory containing the source files for documentation.
         conf_dir: Directory containing the Sphinx configuration.
         build_dir: Directory to output the built documentation.
-        name: Optional custom name for the target. Defaults to "incremental".
         extra_dependencies: Additional dependencies besides the centrally maintained "sphinx_requirements".
     """
 
     dependencies = sphinx_requirements + extra_dependencies
 
     py_binary(
-        name = name,
+        name = "incremental",
         srcs = ["//docs:_tooling/incremental.py"],
         data = [source_code_linker, "//docs:docs_assets", "//docs:docs_stuff"],
         deps = dependencies,
@@ -112,8 +108,20 @@ def _incremental(source_code_linker, source_code_links, source_dir = "docs", con
             "SOURCE_DIRECTORY": source_dir,
             "CONF_DIRECTORY": conf_dir,
             "BUILD_DIRECTORY": build_dir,
-            "ACTION": "incremental", # TODO
-            # "ASSETS_DIR": "docs_assets",
+            "ACTION": "incremental",
+        },
+    )
+
+    py_binary(
+        name = "live_preview",
+        srcs = ["//docs:_tooling/incremental.py"],
+        data = ["//docs:docs_assets", "//docs:docs_stuff"],
+        deps = dependencies,
+        env = {
+            "SOURCE_DIRECTORY": source_dir,
+            "CONF_DIRECTORY": conf_dir,
+            "BUILD_DIRECTORY": build_dir,
+            "ACTION": "live_preview",
         },
     )
 
@@ -141,20 +149,6 @@ def _plantuml_bzl():
             "//docs:docs_assets",
             "//docs:docs_stuff"
         ],
-    )
-
-def _live_preview():
-    py_binary(
-        name = "live_preview",
-        srcs = ["//docs:_tooling/incremental.py"],
-        deps = sphinx_requirements,
-        env = {
-            "SOURCE_CODE_LINKS": source_code_links,
-            "SOURCE_DIRECTORY": source_dir,
-            "CONF_DIRECTORY": conf_dir,
-            "BUILD_DIRECTORY": build_dir,
-            "ACTION": "live_preview", # TODO
-        }
     )
 
 def _ide_support():

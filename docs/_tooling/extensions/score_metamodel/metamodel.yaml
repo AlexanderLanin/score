@@ -58,7 +58,6 @@ needs_types:
     mandatory_options:
       id: "^gd_temp__[0-9a-z_]*$"
       status: "^(valid|draft)$"
-      content: ".+" # gd_req_..._description
     optional_links:
       complies: "std_req__(iso26262|iso21434|isopas8926|aspice_40)__.*$"
 
