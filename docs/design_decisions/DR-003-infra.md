@@ -15,7 +15,7 @@ SPDX-License-Identifier: Apache-2.0
 
 * **Status**: Draft. NOT DISCUSSED YET!
 * **Owners**: Infrastructure Community
-* **Date:** 2025-03-22
+* **Date:** 2025-09-22
 
 ---
 ## Executive Summary
