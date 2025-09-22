@@ -31,6 +31,7 @@ However:
 3) implementation of [DR-002](./DR-002-infra.md) is not available yet, and we need
 a solution for the time being.
 4) interaction of integration and releases is poorly described in [DR-002](./DR-002-infra.md)?!
+5) High level description [DR-002](./DR-002-infra.md) is missing
 
 ## Implementation Alternatives
 
@@ -75,13 +76,44 @@ Components that push directly to main do not benefit from a healthy mainline, ne
   * integration testing (full) is executed.
 * Only after successful integration testing (full) a release can be created
 
-### Extension for issue 3
+### Extension for issue 3 (Timeline)
 
-There is no shortcut for implementation, but there are shortcuts in functionality.
+#### Milestone 1
 
-In a first step, we'll exclude:
-* integration testing (full) ---> how to block/make releases???
-* cross repository support --> PRs need to be merged in order / while being red.
+* PR Workflow (automated):
+  * component local verification is executed.
+
+* Component release workflow (manual):
+  * component local verification is executed +
+  * a release is created
+
+* System release workflow (manual):
+  * system integration testing (full) is executed on known versions of all components +
+  * a release is created (e.g. S-CORE 0.5)
+
+#### Milestone 2
+
+* PR Workflow ("optional"):
+  * component local verification is executed.
+  * integration testing (quick smoke tests) is executed. << gegen alle main prüfen? Händische Versionen?
+
+* Release workflow (manual):
+  * component local verification is executed +
+  * integration testing (full) is executed +
+  * a release is created
+
+#### Milestone n
+
+* PR Workflow ("optional"):
+  * component local verification is executed.
+  * integration testing (quick smoke tests) is executed.
+
+* Post merge:
+  * integration test (full) is executed.
+
+* Release workflow (manual):
+  * Only after successful integration testing (full) a release can be created
+  * Tag all versions in all repositories
 
 
 ## Analysis
